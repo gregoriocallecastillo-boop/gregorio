@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plataformas - 10 Niveles</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <h1>Super Pixel Adventure</h1>
+      <p>WASD / Flechas para moverte, Espacio para saltar.</p>
+    </header>
+
+    <section class="hud" aria-live="polite">
+      <div>Nivel: <strong id="level">1</strong>/10</div>
+      <div>Vidas: <strong id="lives">3</strong></div>
+      <div>Monedas: <strong id="coins">0</strong></div>
+      <div>Tiempo: <strong id="timer">120</strong>s</div>
+    </section>
+
+    <canvas id="game" width="960" height="540" aria-label="Juego de plataformas"></canvas>
+
+    <section class="controls">
+      <button id="restart">Reiniciar Partida</button>
+      <button id="next">Siguiente Nivel</button>
+    </section>
+    <p id="message"></p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
