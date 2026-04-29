@@ -1,0 +1,71 @@
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --accent: #22d3ee;
+  --danger: #ef4444;
+  --text: #e5e7eb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at top, #1e293b, var(--bg));
+  color: var(--text);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.game-shell {
+  width: min(980px, 95vw);
+  background: linear-gradient(160deg, #0b1220, #111827);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.45);
+  padding: 1rem;
+}
+
+header h1 { margin: 0; color: var(--accent); }
+header p { margin-top: .2rem; opacity: .85; }
+
+.hud {
+  margin: .7rem 0;
+  padding: .6rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,.04);
+}
+
+canvas {
+  width: 100%;
+  border: 2px solid #1f2937;
+  border-radius: 10px;
+  background: linear-gradient(#38bdf8 0%, #60a5fa 55%, #93c5fd 100%);
+}
+
+.controls {
+  display: flex;
+  gap: .75rem;
+  margin: .8rem 0;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: white;
+  font-weight: 700;
+  padding: .55rem .95rem;
+}
+
+button:hover { filter: brightness(1.08); }
+
+#message {
+  min-height: 1.4rem;
+  font-weight: 700;
+  color: #fef08a;
+}
