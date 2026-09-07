@@ -2,6 +2,15 @@
 
 Aplicación web de inventario y facturación para pequeños negocios. Servidor Django/Python, base relacional PostgreSQL y una interfaz propia en HTML, CSS y JavaScript que conserva la barra lateral verde oscura, paneles claros y acentos esmeralda de la propuesta visual.
 
+## Desplegar en Render
+
+[Activar Nexo en Render](https://render.com/deploy?repo=https://github.com/gregoriocallecastillo-boop/gregorio/tree/nexo-render)
+
+Elige una contraseña de administrador en `NEXO_BOOTSTRAP_PASSWORD` y aplica el Blueprint.
+Usuario inicial: `gregorio`. Ambos recursos usan el plan gratuito. La base de prueba
+creada el 7 de septiembre de 2026 vence el 7 de octubre de 2026.
+Consulta **docs/RENDER.md** para los pasos de inicio y el negocio de ejemplo.
+
 ## Qué incluye
 
 1. Inicio de sesión, cierre de sesión, cambio de contraseña y protección contra intentos repetidos.
