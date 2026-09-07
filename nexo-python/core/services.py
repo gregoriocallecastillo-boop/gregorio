@@ -87,6 +87,14 @@ def post_document(user,business_id,payload):
         price=decimal(row.get('price',p.price if kind=='sale' else p.cost.quantize(MONEY))) if kind in ['sale','purchase'] else ZERO
         if m.role!='admin' and price!=p.price:raise PermissionDenied('El empleado debe usar el precio vigente del catálogo.')
         stock=_stock(p,w)
+        if 'counted' in row:
+            if kind!='adjustment':raise ValidationError('El conteo solo puede registrar un ajuste.')
+            counted=decimal(row['counted'],QTY)
+            expected=decimal(row.get('expected'),QTY)
+            latest=StockMovement.objects.filter(product=p,warehouse=w).order_by('-id').values_list('id',flat=True).first() or 0
+            if stock.quantity!=expected or row.get('last_movement')!=latest:
+                raise ValidationError('Las existencias cambiaron mientras contabas. Actualiza el conteo y revisa de nuevo antes de guardar.')
+            if q!=counted-expected:raise ValidationError('La diferencia del conteo no coincide. Revisa el cambio.')
         if kind in ['sale','transfer'] and stock.quantity<q or kind=='adjustment' and stock.quantity+q<0:raise ValidationError(f'Stock insuficiente: {p.name}. Disponible: {stock.quantity} {p.unit}.')
         if kind=='sale' and p.expiry and p.expiry<timezone.localdate():raise ValidationError(f'El producto {p.name} está vencido.')
         rate=b.tax_rate if kind in ['sale','purchase'] else ZERO

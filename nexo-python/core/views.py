@@ -152,6 +152,27 @@ def report(request,business_id):
     return response(result)
 
 @api
+def kardex(request,business_id):
+    from .kardex import ledger,csv_response
+    if request.method!='GET':return response({'error':'Método no permitido.'},405)
+    m=member(request.user,business_id,admin=True)
+    result,rows=ledger(m.business,request.GET)
+    return csv_response(result,rows) if request.GET.get('format')=='csv' else response(result)
+
+@api
+def stock_snapshot(request,business_id):
+    if request.method!='GET':return response({'error':'Método no permitido.'},405)
+    member(request.user,business_id,admin=True)
+    with transaction.atomic():
+        b=Business.objects.select_for_update().get(pk=business_id)
+        member(request.user,business_id,admin=True)
+        p=Product.objects.get(pk=request.GET.get('product'),business=b,active=True)
+        w=Warehouse.objects.get(pk=request.GET.get('warehouse'),business=b,active=True)
+        quantity=Stock.objects.filter(product=p,warehouse=w).values_list('quantity',flat=True).first() or ZERO
+        latest=StockMovement.objects.filter(product=p,warehouse=w).order_by('-id').values_list('id',flat=True).first() or 0
+        return response({'quantity':quantity,'last_movement':latest,'product':p.id,'warehouse':w.id})
+
+@api
 @require_POST
 def action(request,business_id):
     p=body(request);op=p.get('action');data=p.get('data',{})

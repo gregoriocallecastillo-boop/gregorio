@@ -14,6 +14,9 @@
 | Anular cobro / registrar reembolso | Sí | No |
 | Devolver venta / emitir nota de crédito | Sí | No |
 | Ajustes y traslados | Sí | No |
+| Kardex y exportación del historial por producto | Sí | No |
+| Conteo físico con revisión previa | Sí | No |
+| Lista de productos por reponer | Sí | Consulta |
 | Almacenes | Administrar | Seleccionar al vender |
 | Proveedores | Administrar | No |
 | Clientes | Administrar | Consultar y seleccionar |

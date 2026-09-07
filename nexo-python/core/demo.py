@@ -12,7 +12,7 @@ import io
 import json
 import secrets
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
 from types import SimpleNamespace
@@ -152,6 +152,18 @@ def post_document(s, data):
         if kind == "sale" and p["expiry"] and p["expiry"] < str(timezone.localdate()):
             raise ValidationError("No se puede vender un producto vencido.")
         cost = Decimal(p["cost"])
+        if 'counted' in raw:
+            from .services import decimal as checked_decimal, QTY
+            if kind != 'adjustment':
+                raise ValidationError('El conteo solo puede registrar un ajuste.')
+            expected, counted = checked_decimal(raw.get('expected'), QTY), checked_decimal(raw['counted'], QTY)
+            current = stock(p, warehouse)
+            quantity = Decimal(current['quantity']) if current else ZERO
+            latest = demo_last_movement(s, p['id'], warehouse['id'])
+            if quantity != expected or raw.get('last_movement') != latest:
+                raise ValidationError('Las existencias cambiaron mientras contabas. Actualiza el conteo y revisa de nuevo antes de guardar.')
+            if q != counted-expected:
+                raise ValidationError('La diferencia del conteo no coincide. Revisa el cambio.')
         price = number(raw.get("price", p["price"])) if kind in ("sale", "purchase") else ZERO
         if kind == "sale" and s["role"] == "employee" and price != Decimal(p["price"]):
             raise PermissionDenied("El empleado no puede modificar el precio de venta.")
@@ -167,11 +179,11 @@ def post_document(s, data):
         p["version"] += 1
         lines.append({"product": p["id"], "name": p["name"], "sku": p["sku"], "unit": p["unit"],
                       "quantity": str(q), "unit_price": str(price), "unit_cost": str(cost), "tax_rate": str(rate),
-                      "subtotal": str(subtotal), "tax": str(tax), "total": str(subtotal + tax)})
+                      "subtotal": str(subtotal), "tax": str(tax), "total": str(subtotal + tax), "average_cost": p['cost']})
     identifier = next_id(s["documents"])
     document = {"id": identifier, "number": f"DEMO-{identifier:05d}", "kind": kind, "date": timestamp(),
                 "contact": contact["name"] if contact else "", "warehouse": warehouse["name"], "warehouse_id": warehouse["id"],
-                "destination": destination["name"] if destination else "", "creator": "Invitado" if actor(s) == 1 else "Empleado demo",
+                "destination": destination["name"] if destination else "", "destination_id": destination['id'] if destination else None, "creator": "Invitado" if actor(s) == 1 else "Empleado demo",
                 "created_by": actor(s), "lines": lines, "reference": reference, "note": note, "returned": False, "invoice_id": None}
     for field in ("subtotal", "tax", "total"):
         document[field] = str(sum((Decimal(l[field]) for l in lines), ZERO))
@@ -218,6 +230,7 @@ def seed():
         if quantity:
             post_document(s, {"kind": "purchase", "warehouse": 1, "contact": 1, "reference": "Inventario de ejemplo",
                               "lines": [{"product": idx, "quantity": quantity, "price": cost}]})
+            s['documents'][0]['date'] = (timezone.localtime()-timedelta(days=8)).isoformat()
     # Several dates make the real dashboard, receivables and charts useful immediately.
     for days, product, quantity in [(6, 1, 2), (5, 2, 5), (4, 7, 12), (3, 4, 4), (2, 1, 3), (1, 2, 7), (0, 1, 4)]:
         post_document(s, {"kind": "sale", "warehouse": 1, "contact": 2, "lines": [{"product": product, "quantity": quantity}]})
@@ -250,6 +263,7 @@ def visible(s):
         for doc in d["documents"]:
             for line in doc["lines"]:
                 line.pop("unit_cost", None)
+                line.pop("average_cost", None)
     return d
 
 
@@ -329,6 +343,8 @@ def perform(s, operation, data):
             change_stock(p, find(s["warehouses"], original["warehouse_id"]), q)
             p["version"] += 1
         doc = copy.deepcopy(original)
+        for line in doc['lines']:
+            line['average_cost'] = find(s['products'], line['product'])['cost']
         doc.update(id=next_id(s["documents"]), kind="return", date=timestamp(), note=note, reference=original["number"], returned=False, original=original["id"], created_by=1, creator="Invitado")
         doc["number"] = f"DEMO-{doc['id']:05d}"
         credit = copy.deepcopy(inv)
@@ -524,6 +540,78 @@ def state_view(request, box, business_id):
 @sandbox_api
 def report(request, box, business_id):
     return reply(report_data(box.data, request.GET))
+
+
+def warehouse_delta(s, document, line, warehouse_id):
+    q = Decimal(line['quantity'])
+    if document['warehouse_id'] == warehouse_id:
+        return -q if document['kind'] in ('sale', 'transfer') else q
+    destination_id = document.get('destination_id')
+    if not destination_id and document.get('destination'):
+        destination_id = next((w['id'] for w in s['warehouses'] if w['name'] == document['destination']), None)
+    return q if document['kind'] == 'transfer' and destination_id == warehouse_id else ZERO
+
+
+def demo_last_movement(s, product_id, warehouse_id):
+    return max((d['id'] for d in s['documents'] for l in d['lines']
+                if l['product'] == product_id and warehouse_delta(s, d, l, warehouse_id)), default=0)
+
+
+@sandbox_api
+def stock_snapshot(request, box, business_id):
+    if request.method != 'GET':return reply({'error': 'Método no permitido.'}, 405)
+    s = box.data;admin(s)
+    p = find(s['products'], request.GET.get('product'));w = find(s['warehouses'], request.GET.get('warehouse'))
+    if not p['active'] or not w['active']:raise ValidationError('Selecciona un producto y un almacén activos.')
+    row = stock(p, w)
+    return reply({'product': p['id'], 'warehouse': w['id'], 'quantity': row['quantity'] if row else '0',
+                  'last_movement': demo_last_movement(s, p['id'], w['id'])})
+
+
+@sandbox_api
+def kardex(request, box, business_id):
+    from .kardex import parameters, PAGE_SIZE, csv_response
+    if request.method != 'GET':return reply({'error': 'Método no permitido.'}, 405)
+    s = box.data;admin(s)
+    pid, wid, start, end, page = parameters(request.GET)
+    p = find(s['products'], pid);w = find(s['warehouses'], wid)
+    all_rows = []
+    # Demo documents retain the movements; no business records are queried.
+    for d in s['documents']:
+        for line in d['lines']:
+            if line['product'] != pid:continue
+            delta = warehouse_delta(s, d, line, wid)
+            if not delta:continue
+            when = d['date']
+            # Older disposable demos seeded opening purchases after example sales.
+            if d['kind'] == 'purchase' and d['reference'] == 'Inventario de ejemplo':
+                earliest = min(x['date'] for x in s['documents'])
+                when = (datetime.fromisoformat(earliest)-timedelta(days=1)).isoformat()
+            all_rows.append({'id': d['id'], 'date': when, 'document': d['number'], 'document_id': d['id'],
+                             'kind': d['kind'], 'reference': d['reference'], 'note': d['note'], 'actor': d['creator'],
+                             'incoming': max(delta, ZERO), 'outgoing': max(-delta, ZERO), 'delta': delta,
+                             'average_cost': line.get('average_cost')})
+    all_rows.sort(key=lambda r: (r['date'], r['id']))
+    stock_row = stock(p, w)
+    initial = Decimal(stock_row['quantity']) if stock_row else ZERO
+    initial -= sum((r['delta'] for r in all_rows), ZERO)
+    running = initial;opening = initial;filtered = []
+    for row in all_rows:
+        running += row.pop('delta');row['balance'] = running
+        if row['date'][:10] < str(start):opening = running
+        elif row['date'][:10] <= str(end):filtered.append(row)
+    incoming = sum((r['incoming'] for r in filtered), ZERO)
+    outgoing = sum((r['outgoing'] for r in filtered), ZERO)
+    pages = max(1, (len(filtered)+PAGE_SIZE-1)//PAGE_SIZE)
+    if page > pages:raise ValidationError('Esa página ya no está disponible.')
+    result = {'product': {k: p[k] for k in ('id', 'name', 'sku', 'unit')}, 'warehouse': {'id': w['id'], 'name': w['name']},
+              'start': start, 'end': end, 'opening': opening, 'incoming': incoming, 'outgoing': outgoing,
+              'closing': opening+incoming-outgoing, 'page': page, 'pages': pages, 'total_rows': len(filtered),
+              'rows': filtered[(page-1)*PAGE_SIZE:page*PAGE_SIZE]}
+    if request.GET.get('format') == 'csv':
+        result['all_rows'] = filtered
+        return csv_response(result, demo=True)
+    return reply(result)
 
 
 @sandbox_api
