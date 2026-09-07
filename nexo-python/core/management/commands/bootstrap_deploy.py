@@ -32,7 +32,7 @@ class Command(BaseCommand):
             raise CommandError(' '.join(error.messages))
         user.set_password(password)
         user.save()
-        Profile.objects.create(user=user)
+        Profile.objects.create(user=user, must_change_password=True)
         business = Business.objects.create(name='Mi negocio')
         Membership.objects.create(user=user, business=business, role='admin')
         Warehouse.objects.create(business=business, name='Almacén principal')

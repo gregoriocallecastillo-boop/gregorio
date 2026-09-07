@@ -156,6 +156,7 @@ class DeploymentBootstrapTests(TestCase):
         with patch.dict(os.environ, {'NEXO_BOOTSTRAP_USERNAME':'owner', 'NEXO_BOOTSTRAP_PASSWORD':'Initial-Secure-Password-972!', 'NEXO_SEED_DEMO':'1'}):
             call_command('bootstrap_deploy', stdout=StringIO())
         user=get_user_model().objects.get(username='owner')
+        self.assertTrue(Profile.objects.get(user=user).must_change_password)
         self.assertTrue(user.check_password('Initial-Secure-Password-972!'))
         self.assertEqual(Membership.objects.filter(user=user,role='admin').count(),2)
         self.assertEqual(Product.objects.filter(business__name='Mi negocio').count(),0)
