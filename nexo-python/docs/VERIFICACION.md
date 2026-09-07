@@ -1,32 +1,45 @@
-# Verificación de esta entrega
+# Verificación de la interfaz guiada y Kardex
 
-Fecha: 7 de septiembre de 2026.
+Fecha: 7 de septiembre de 2026 (UTC).
 
-## Ejecutado
+## Versión publicada
 
-- Instalación de Django 5.2.17, Psycopg 3.3.5, Gunicorn 25.3.0 y demás dependencias declaradas.
-- Comprobación de sintaxis de Python y JavaScript.
+- Repositorio: `gregoriocallecastillo-boop/gregorio`, rama `nexo-render`.
+- Código de la aplicación: `3ea345d8f25446c885a92e2cf9e2a84424a9ebe2`.
+- Render: `nexo-inventario-python`, despliegue `dep-dafkheqd0e5s73cpt6i0`, estado `live`, finalizado a las 23:30 UTC.
+- [Demostración pública](https://nexo-inventario-python.onrender.com/demo/), con entrada sin contraseña y datos ficticios separados por visitante.
+- Python/Django y PostgreSQL se conservan. Esta actualización no añade migraciones de esquema.
+
+## Pruebas automatizadas
+
+- **65 pruebas aprobadas en PostgreSQL 17 nativo**, incluidas las dos de concurrencia. [Ejecución de GitHub Actions](https://github.com/gregoriocallecastillo-boop/gregorio/actions/runs/34170109882).
 - `manage.py check`: sin problemas.
-- Migraciones aplicadas desde cero sobre PostgreSQL compilado a WebAssembly (PGlite), conectado por Psycopg y el protocolo PostgreSQL. Sin sustitución por SQLite.
-- 38 pruebas aprobadas sobre PostgreSQL 17 nativo en GitHub Actions, incluida la prueba de dos vendedores simultáneos. Ejecución: https://github.com/gregoriocallecastillo-boop/gregorio/actions/runs/34092375040.
-- También se ejecutaron 37 pruebas en PGlite; allí se omitió una prueba de concurrencia por las limitaciones del motor embebido.
-- Inicialización única del administrador desde un secreto privado de Render: creación, contraseña fuerte, datos de ejemplo separados y reintentos que no reinician cuentas existentes.
-- Blueprint render.yaml validado contra el esquema oficial de Render.
-- Controles probados: ventas sin stock, rollback completo ante error, costo promedio, transferencias, cantidades fraccionarias, impuestos, reenvíos, roles, aislamiento de negocios, CSRF, bloqueo de intentos de acceso, contraseñas temporales, pagos parciales, exceso de cobro, reversión de pagos, notas de crédito, reportes y restricciones de base de datos.
-- Exportación CSV con neutralización de fórmulas, generación de PDF y carga de fotos con validación de permisos, formato y revisión de caché.
-- Recursos estáticos recopilados y comprimidos con WhiteNoise.
-- Revisión de configuración de producción: ningún error; advertencia opcional sobre HSTS preload. No se ha activado la inscripción en una lista de precarga de navegadores.
-- Factura ficticia de 30 renglones generada y sus cuatro páginas revisadas visualmente para comprobar paginación, márgenes y tipografía.
+- Comprobaciones de sintaxis de Python y de ambos archivos JavaScript: aprobadas.
+- `collectstatic`: recursos recopilados y procesados con WhiteNoise.
+- PGlite local: 63 aprobadas y dos de concurrencia omitidas; esas dos sí aprobaron en PostgreSQL nativo.
+- La suite comprueba ventas sin stock, atomicidad, costo promedio, traslados, cantidades fraccionarias, impuestos, idempotencia, roles, aislamiento, CSRF, controles de acceso, pagos, devoluciones y restricciones de la base de datos.
+- Las nuevas pruebas comprueban saldos del kardex, fechas, paginación, CSV completo, neutralización de fórmulas, permisos, aislamiento de la demo y conteos desactualizados, incluido el caso de movimientos que vuelven a dejar la cantidad original.
 
-## Pendiente antes de uso comercial
+## Recorrido del navegador sobre Render
 
-- Activar el Blueprint de Render y comprobar la conexión a la base ya creada, el login y la comprobación de salud del despliegue definitivo.
-- Iniciar y comprobar la instalación Docker en una máquina con Docker disponible. El paquete contiene la configuración, pero Docker no está instalado en este entorno.
-- Probar los flujos completos de la interfaz en navegadores de escritorio y Android; no se realizó una prueba de navegador ni se capturaron pantallas de la aplicación ejecutándose.
-- Medir carga y tiempo de respuesta con el catálogo y volumen reales del negocio.
-- Verificar HTTPS, dominio, secretos, backups, recuperación y entrega de credenciales en el servidor definitivo.
-- Definir país y requisitos fiscales. Los PDF son documentos comerciales; no acreditan integración fiscal electrónica.
+Se utilizó Chrome de escritorio, con ancho de contenido de 1348 píxeles CSS, y exclusivamente un espacio de demostración del navegador de pruebas.
 
-Las pruebas con PostgreSQL 17 nativo verificaron las reglas de negocio y el bloqueo concurrente de existencias. La conexión privada y el despliegue concreto en Render siguen pendientes de activación. La revisión visual del PDF no sustituye la comprobación de la interfaz en un teléfono.
+- Entrada pública: muestra 13 módulos y permite entrar como invitado sin credenciales.
+- Inicio: botones de tareas, gráfico de ventas y avisos de reposición y cobros; captura revisada visualmente.
+- Navegación: se abrieron los 13 módulos, sin alertas de error de la aplicación.
+- Venta guiada: un café de $6.50, revisión del descuento de una unidad, confirmación y factura `DEMO-F-00009`.
+- Cobro ficticio: registro de $6.50 en efectivo; la factura cambió de pendiente a pagada.
+- Inventario y kardex: café de 38 a 37 unidades tras la venta; salida de una unidad y costo promedio histórico de $4.2000.
+- Conteo físico: revisión y confirmación de 36 unidades frente a 37 registradas; el ajuste quedó en el kardex con motivo y saldo final de 36.
+- Reposición: lista de aceite, galletas y papel con diferencias de 3, 8 y 3 unidades hasta sus mínimos configurados.
+- Empleado: cinco módulos visibles. No aparecen alta de productos, conteo, kardex ni costo del producto en su detalle.
+- Las capturas de inicio, revisión de venta, menú de módulos y conteo fueron inspeccionadas durante el recorrido.
 
-No se garantiza ausencia absoluta de errores. El informe distingue deliberadamente lo probado de lo pendiente.
+## Límites y comprobaciones pendientes
+
+- La adaptación móvil está implementada mediante estilos para pantallas de hasta 799 y 390 píxeles, navegación inferior y tablas convertidas en registros. **No se ha verificado en un teléfono Android físico ni con un viewport móvil efectivo en este navegador.**
+- La exportación CSV está validada en las pruebas automatizadas. Se pulsó el botón en el navegador publicado, pero el entorno no confirmó el evento de descarga; no se declara verificada de extremo a extremo la descarga del archivo en ese navegador.
+- No se usaron credenciales reales ni se modificaron existencias de un negocio real en las pruebas del navegador. Los permisos del backend real se verificaron con las pruebas automatizadas.
+- No se realizó en esta actualización una prueba de carga con el catálogo real, restauración de backups, instalación Docker o integración fiscal electrónica.
+
+Este informe distingue las comprobaciones realizadas de las pendientes; no garantiza ausencia absoluta de errores.

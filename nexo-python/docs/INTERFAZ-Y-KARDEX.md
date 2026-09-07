@@ -40,4 +40,6 @@ Lotes con múltiples fechas de vencimiento, reservas y predicción de compras re
 
 ## Validación
 
-La suite incorpora pruebas de saldos, rangos de fechas, traslados, devoluciones, paginación, exportación completa, permisos, aislamiento y conteos desactualizados. La ejecución local encontró 65 pruebas: 63 aprobadas y 2 de concurrencia reservadas para PostgreSQL nativo en GitHub Actions. Los resultados finales de publicación y navegador se registran en el historial de entrega.
+La suite incorpora pruebas de saldos, rangos de fechas, traslados, devoluciones, paginación, exportación completa, permisos, aislamiento y conteos desactualizados. Las 65 pruebas aprobaron en PostgreSQL 17 nativo en [GitHub Actions](https://github.com/gregoriocallecastillo-boop/gregorio/actions/runs/34170109882), incluidas las dos de concurrencia que no se ejecutan en PGlite.
+
+La versión `3ea345d8f25446c885a92e2cf9e2a84424a9ebe2` se publicó en Render con despliegue `dep-dafkheqd0e5s73cpt6i0`, estado `live`. En el navegador se recorrieron los 13 módulos, el acceso de invitado, una venta con factura y cobro, un conteo físico y la conciliación del kardex. La vista de empleado mostró sus cinco módulos y ocultó costos y controles administrativos. El alcance exacto de las comprobaciones y lo pendiente están en [VERIFICACION.md](VERIFICACION.md).
