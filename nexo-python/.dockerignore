@@ -1,0 +1,11 @@
+.venv
+.env
+.git
+__pycache__
+*.pyc
+staticfiles
+.pgdata
+.testdata
+*.log
+
+backups

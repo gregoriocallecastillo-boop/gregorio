@@ -1,0 +1,13 @@
+.venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+staticfiles/
+.pgdata/
+.testdata/
+.coverage
+*.log
+
+backups/

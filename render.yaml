@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+# Demonstration deployment. The free PostgreSQL instance expires after 30 days.
+services:
+  - type: web
+    name: nexo-inventario-python
+    runtime: python
+    plan: free
+    region: ohio
+    branch: nexo-render
+    rootDir: nexo-python
+    buildCommand: python scripts/render_build.py
+    startCommand: python scripts/render_start.py
+    healthCheckPath: /health/
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.12
+      - key: DEBUG
+        value: "0"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: TIME_ZONE
+        value: America/Chicago
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexo-demo-postgres
+          property: connectionString
+      - key: NEXO_BOOTSTRAP_USERNAME
+        value: gregorio
+      - key: NEXO_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: NEXO_SEED_DEMO
+        value: "1"
+databases:
+  - name: nexo-demo-postgres
+    databaseName: nexo_demo_postgres
+    user: nexo_demo_postgres_user
+    plan: free
+    region: ohio
+    postgresMajorVersion: "17"
+    ipAllowList: []
