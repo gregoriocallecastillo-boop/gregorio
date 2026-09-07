@@ -1,0 +1,14 @@
+{% load static %}<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Prueba Nexo: inventario, ventas y facturación. Entra como invitado y explora todos los módulos con datos de ejemplo.">
+<title>Prueba Nexo · Acceso de invitado</title><link rel="icon" href="{% static 'core/favicon.svg' %}"><link rel="stylesheet" href="{% static 'core/style.css' %}"></head>
+<body class="login-body demo-login"><main class="login-layout">
+<section class="login-brand"><a class="logo" href="/demo/">◇ <strong>nexo</strong></a>
+<div class="login-copy"><span class="eyebrow">TU PRÓXIMO ESPACIO DE TRABAJO</span><h1>Conoce Nexo.<br>Hazlo tuyo.</h1><p>Explora un negocio completo. Prueba una venta, revisa el inventario y abre tu primera factura.</p>
+<div class="demo-preview"><div><span>MERCADO CENTRAL</span><span class="demo-live">● En orden</span></div><div class="demo-preview-stats"><div><small>Productos</small><strong>8</strong></div><div><small>Módulos</small><strong>12</strong></div><div><small>Tu espacio</small><strong>100%</strong></div></div><div class="demo-spark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><small>Desde tu teléfono, tablet o computadora.</small></div>
+</div><small>Inventario · Ventas · Facturación · Equipo</small></section>
+<section class="login-form"><div><span class="login-icon">↗</span><span class="demo-tag">DEMOSTRACIÓN INTERACTIVA</span><h2>Tu invitación está lista.</h2><p>Entra sin registro y prueba Nexo a tu ritmo.</p>
+<div class="demo-features"><div><span>01</span><div><b>Todos los módulos a la vista</b><small>Productos, compras, ventas, facturas y reportes.</small></div></div><div><span>02</span><div><b>Una prueba solo para ti</b><small>Tus cambios no afectan a otros visitantes.</small></div></div><div><span>03</span><div><b>Dos niveles de acceso</b><small>Alterna entre administrador y empleado.</small></div></div></div>
+<form method="post">{% csrf_token %}{% if error %}<div class="form-error" role="alert">{{ error }}</div>{% endif %}<button class="button primary" type="submit">Entrar como invitado <span>→</span></button></form>
+<p class="login-help">Datos ficticios · Sin contraseña · Sin tarjeta<br>Tu prueba dura 24 horas. Puedes reiniciarla cuando quieras.</p><a class="demo-owner-link" href="/login/">Ya tengo cuenta →</a></div><footer>Nexo · Un espacio para cada negocio</footer></section>
+</main></body></html>

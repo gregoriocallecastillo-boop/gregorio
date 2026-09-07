@@ -3,6 +3,14 @@ from django.db import models
 from django.db.models import Q
 from django.conf import settings
 
+class DemoSandbox(models.Model):
+    """Bounded, disposable visitor data. Never related to a real business/user."""
+    token_hash = models.CharField(max_length=64, primary_key=True)
+    data = models.JSONField(default=dict)
+    expires_at = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class Business(models.Model):
     name=models.CharField(max_length=120)
     sector=models.CharField(max_length=80,default='Tienda / supermercado')
