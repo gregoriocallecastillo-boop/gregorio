@@ -27,6 +27,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from .models import DemoSandbox
+from .hardware_catalog import HARDWARE_PRODUCTS, HARDWARE_PHOTOS
 from .services import CURRENCIES, UNITS
 
 COOKIE = "nexo_demo"
@@ -72,8 +73,20 @@ def reply(data, status=200):
     return response
 
 
+def demo_profile(request):
+    return "hardware" if request.path.startswith("/demo/ferreteria/") else "market"
+
+
+def demo_base(request):
+    return "/demo/ferreteria" if demo_profile(request) == "hardware" else "/demo"
+
+
+def cookie_name(request):
+    return COOKIE + "_hardware" if demo_profile(request) == "hardware" else COOKIE
+
+
 def token_hash(request):
-    token = request.COOKIES.get(COOKIE, "")
+    token = request.COOKIES.get(cookie_name(request), "")
     return hashlib.sha256(token.encode()).hexdigest() if len(token) == 43 else ""
 
 
@@ -201,8 +214,8 @@ def post_document(s, data):
     return {"ok": True, "created": True, "document": identifier, "invoice": document["invoice_id"]}
 
 
-def seed():
-    s = {"role": "admin", "actions": 0, "keys": {}, "photos": {}, "history_limit": 250,
+def seed(profile="market"):
+    s = {"profile": profile, "role": "admin", "actions": 0, "keys": {}, "photos": {}, "history_limit": 250,
          "business": {"id": 1, "name": "Mercado Central · Demo", "sector": "Tienda / supermercado", "currency": "USD",
                       "tax_rate": "0", "tax_id": "DEMO-000", "address": "Avenida del Mercado 120 · Dirección ficticia", "email": "demo@example.com", "phone": ""},
          "warehouses": [{"id": 1, "name": "Tienda principal", "location": "Área de ventas", "active": True},
@@ -222,11 +235,21 @@ def seed():
         ("Agua mineral 600 ml", "AGUA-600", "Café y bebidas", "0.45", "1.20", 90, 20),
         ("Papel de cocina", "PAPEL", "Hogar", "1.75", "2.80", 5, 8),
     ]
+    if profile == "hardware":
+        products = HARDWARE_PRODUCTS
+        s["business"].update(name="Ferretería El Constructor · Demo", sector="Ferretería",
+                             address="Avenida del Taller 240 · Dirección ficticia")
+        s["warehouses"][0].update(name="Mostrador y exhibición", location="Área de venta")
+        s["warehouses"][1].update(name="Bodega de herramientas", location="Reserva de productos")
+        s["contacts"][0]["name"] = "Suministros del Taller · Ejemplo"
+        s["contacts"][1]["name"] = "Servicios de Mantenimiento · Ejemplo"
     for idx, (name, sku, category, cost, price, quantity, minimum) in enumerate(products, 1):
         s["products"].append({"id": idx, "name": name, "sku": sku, "category": category, "unit": "unidad",
                               "cost": cost, "price": price, "stock": "0", "minimum": str(minimum), "stocks": [],
                               "location": f"Pasillo {(idx + 1) // 2} · Estante {idx}", "expiry": None,
                               "active": True, "version": 1, "has_photo": False})
+        if profile == "hardware":
+            s["products"][-1]["demo_photo"] = copy.deepcopy(HARDWARE_PHOTOS[sku])
         if quantity:
             post_document(s, {"kind": "purchase", "warehouse": 1, "contact": 1, "reference": "Inventario de ejemplo",
                               "lines": [{"product": idx, "quantity": quantity, "price": cost}]})
@@ -445,7 +468,7 @@ def sandbox_api(fn):
         try:
             with transaction.atomic():
                 box = DemoSandbox.objects.select_for_update().filter(token_hash=token_hash(request), expires_at__gt=timezone.now()).first()
-                if box is None:
+                if box is None or box.data.get("profile", "market") != demo_profile(request):
                     return reply({"error": "Tu demostración terminó. Vuelve a entrar como invitado."}, 401)
                 if kwargs.get("business_id", 1) != 1:
                     return reply({"error": "Ese negocio no pertenece a tu demostración."}, 404)
@@ -481,6 +504,7 @@ def payload(request):
 @ensure_csrf_cookie
 def entry(request):
     error = ""
+    profile, base = demo_profile(request), demo_base(request)
     if request.method == "POST":
         try:
             with transaction.atomic():
@@ -489,39 +513,42 @@ def entry(request):
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT pg_advisory_xact_lock(734209118)")
                 DemoSandbox.objects.filter(expires_at__lte=timezone.now()).delete()
-                existing = DemoSandbox.objects.filter(token_hash=token_hash(request)).exists()
-                if existing:
-                    return redirect("/demo/app/")
+                existing = DemoSandbox.objects.filter(token_hash=token_hash(request)).first()
+                if existing and existing.data.get("profile", "market") == profile:
+                    return redirect(base + "/app/")
                 if DemoSandbox.objects.count() >= 200:
                     error = "La demostración está muy concurrida. Intenta de nuevo más tarde."
                 else:
                     token = secrets.token_urlsafe(32)
-                    DemoSandbox.objects.create(token_hash=hashlib.sha256(token.encode()).hexdigest(), data=seed(), expires_at=timezone.now() + timedelta(hours=24))
-                    result = redirect("/demo/app/")
-                    result.set_cookie(COOKIE, token, max_age=86400, httponly=True, secure=settings.SESSION_COOKIE_SECURE, samesite="Lax", path="/demo/")
+                    DemoSandbox.objects.create(token_hash=hashlib.sha256(token.encode()).hexdigest(), data=seed(profile), expires_at=timezone.now() + timedelta(hours=24))
+                    result = redirect(base + "/app/")
+                    result.set_cookie(cookie_name(request), token, max_age=86400, httponly=True, secure=settings.SESSION_COOKIE_SECURE, samesite="Lax", path=base + "/")
                     result["Cache-Control"] = "no-store"
                     return result
         except DatabaseError:
             error = "El servicio está iniciando. Vuelve a intentar en un momento."
-    result = render(request, "core/demo_login.html", {"error": error})
+    result = render(request, "core/demo_login.html", {"error": error, "hardware": profile == "hardware", "demo_base": base, "hardware_photos": list(HARDWARE_PHOTOS.values())})
     result["Cache-Control"] = "no-store"
     return result
 
 
 @ensure_csrf_cookie
 def app(request):
-    if not DemoSandbox.objects.filter(token_hash=token_hash(request), expires_at__gt=timezone.now()).exists():
-        return redirect("/demo/")
-    result = render(request, "core/app.html", {"demo": True, "password_required": False})
+    box = DemoSandbox.objects.filter(token_hash=token_hash(request), expires_at__gt=timezone.now()).first()
+    if box is None or box.data.get("profile", "market") != demo_profile(request):
+        return redirect(demo_base(request) + "/")
+    result = render(request, "core/app.html", {"demo": True, "password_required": False, "demo_base": demo_base(request)})
     result["Cache-Control"] = "no-store"
     return result
 
 
 @require_POST
 def leave(request):
-    DemoSandbox.objects.filter(token_hash=token_hash(request)).delete()
-    result = redirect("/demo/")
-    result.delete_cookie(COOKIE, path="/demo/")
+    box = DemoSandbox.objects.filter(token_hash=token_hash(request)).first()
+    if box and box.data.get("profile", "market") == demo_profile(request):
+        box.delete()
+    result = redirect(demo_base(request) + "/")
+    result.delete_cookie(cookie_name(request), path=demo_base(request) + "/")
     return result
 
 
@@ -643,7 +670,7 @@ def action(request, box, business_id):
 @sandbox_api
 def reset(request, box):
     payload(request)
-    box.data = seed()
+    box.data = seed(demo_profile(request))
     return reply({"ok": True})
 
 

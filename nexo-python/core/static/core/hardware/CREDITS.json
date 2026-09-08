@@ -1,0 +1,66 @@
+{
+  "FER-MARTILLO": {
+    "src": "/static/core/hardware/martillo.jpg",
+    "label": "Martillo",
+    "author": "Evan-Amos",
+    "license": "Dominio público",
+    "license_url": "https://commons.wikimedia.org/wiki/File:Claw-hammer.jpg#Licensing",
+    "source": "https://commons.wikimedia.org/wiki/File:Claw-hammer.jpg"
+  },
+  "FER-CINTA": {
+    "src": "/static/core/hardware/cinta.jpg",
+    "label": "Cinta métrica",
+    "author": "Jacek Halicki",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Zwijana_ta%C5%9Bma_miernicza_(1).jpg"
+  },
+  "FER-ATORN": {
+    "src": "/static/core/hardware/taladro.jpg",
+    "label": "Atornillador",
+    "author": "Jacek Halicki",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Wkr%C4%99tarka_akumulatorowa_Xiaomi_Mi_(1).jpg"
+  },
+  "FER-ALICATE": {
+    "src": "/static/core/hardware/alicate.jpg",
+    "label": "Alicate",
+    "author": "Jacek Halicki",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Kombinerki_(1).jpg"
+  },
+  "FER-DESTORN": {
+    "src": "/static/core/hardware/destornillador.jpg",
+    "label": "Destornillador",
+    "author": "Jiří Sedláček",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Big_flat_screwdriver.jpg"
+  },
+  "FER-LLAVE": {
+    "src": "/static/core/hardware/llave.jpg",
+    "label": "Llave ajustable",
+    "author": "Jacek Halicki",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Klucz_nastawny.jpg"
+  },
+  "FER-TORNILLO": {
+    "src": "/static/core/hardware/tornillo.jpg",
+    "label": "Tornillo",
+    "author": "Mynameisnatmo",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Black_wood_screw_with_flat_Phillips_head.jpg"
+  },
+  "FER-GAFAS": {
+    "src": "/static/core/hardware/gafas.jpg",
+    "label": "Gafas de seguridad",
+    "author": "Angelsharum",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Safety_Glasses.jpg"
+  }
+}
