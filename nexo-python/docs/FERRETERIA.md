@@ -19,3 +19,13 @@ Si el invitado carga otra fotografía, se muestra esa imagen en su espacio tempo
 ## Comprobaciones
 
 Las pruebas de `test_hardware_demo.py` verifican catálogo y archivos JPEG, prefijo de las API, separación entre perfiles y visitantes, reinicio, cierre, rechazo de cookies de otro perfil, CSRF, permisos del empleado, venta, cobro, factura PDF y conciliación del Kardex para cada producto y almacén.
+
+## Resultado de la publicación · 8 de septiembre de 2026 UTC
+
+- Código publicado: `95ee9eadfb2593e8fdffccfb464e2249ff961f8b`.
+- Las **70 pruebas aprobaron en PostgreSQL 17 nativo**: [GitHub Actions](https://github.com/gregoriocallecastillo-boop/gregorio/actions/runs/34171971449). En PGlite aprobaron 68 y se omitieron las dos de concurrencia que sí aprobaron en PostgreSQL nativo.
+- Render confirmó el despliegue `dep-dafl1kgn74is73agjmp0` como `live` a las 00:04 UTC.
+- [Entrada pública verificada](https://nexo-inventario-python.onrender.com/demo/ferreteria/).
+- En Chrome se verificaron la entrada de invitado, las ocho fotografías cargadas, el catálogo, una venta de un martillo por $12.90, la factura `DEMO-F-00008` y la disminución de 39 a 38 unidades en el Kardex. No se registraron errores de JavaScript de la aplicación durante ese recorrido.
+- Se verificó el detalle del producto en la vista de empleado: fotografía, precio y existencias, con atribución de la foto y sin costo promedio ni controles administrativos. La tienda original mantuvo su propio negocio al recargar otra pestaña.
+- La revisión visual se realizó en Chrome de escritorio. Los estilos móviles están implementados, pero no se verificó esta entrega en un teléfono físico.
